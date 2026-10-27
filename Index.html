@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIPATUH RCB3 - SD Negeri Rancabentang 3</title>
+    <!-- Tailwind CSS for Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        /* Custom scrollbar for better UI */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal flex h-screen overflow-hidden">
+
+    <!-- Sidebar / Mobile Menu -->
+    <aside id="sidebar" class="bg-blue-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out z-20 flex flex-col shadow-xl">
+        <!-- Logo -->
+        <div class="flex items-center space-x-2 px-4 mb-4">
+            <i class="fas fa-school text-3xl"></i>
+            <span class="text-2xl font-extrabold text-white">SIPATUH</span>
+        </div>
+        <p class="px-4 text-sm text-blue-300 font-semibold mb-6">SDN Rancabentang 3</p>
+
+        <!-- Navigation -->
+        <nav class="flex-1">
+            <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item block py-2.5 px-4 rounded transition duration-200 bg-blue-900 hover:bg-blue-700 hover:text-white">
+                <i class="fas fa-home mr-2"></i>Dashboard
+            </a>
+            <a href="#" onclick="switchTab('keterlambatan')" id="nav-keterlambatan" class="nav-item block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white mt-2">
+                <i class="fas fa-user-clock mr-2"></i>Keterlambatan Siswa
+            </a>
+            <a href="#" onclick="switchTab('pelanggaran')" id="nav-pelanggaran" class="nav-item block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white mt-2">
+                <i class="fas fa-exclamation-circle mr-2"></i>Pelanggaran Siswa
+            </a>
+            <a href="#" onclick="switchTab('kehadiran')" id="nav-kehadiran" class="nav-item block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white mt-2">
+                <i class="fas fa-calendar-check mr-2"></i>Kehadiran Siswa
+            </a>
+            <a href="#" onclick="switchTab('piket')" id="nav-piket" class="nav-item block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white mt-2">
+                <i class="fas fa-clipboard-list mr-2"></i>Jadwal Piket Guru
+            </a>
+        </nav>
+        <div class="p-4 text-xs text-center text-blue-400 border-t border-blue-700">
+            &copy; 2026 SIPATUH RCB3
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+        <!-- Top Navbar for Mobile -->
+        <header class="bg-white shadow-md py-4 px-6 flex items-center justify-between z-10 relative">
+            <div class="flex items-center">
+                <button id="mobile-menu-btn" class="text-gray-600 focus:outline-none md:hidden mr-4">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h1 id="page-title" class="text-xl font-bold text-gray-800">Dashboard</h1>
+            </div>
+            <div class="flex items-center text-gray-500">
+                <i class="fas fa-user-circle text-2xl"></i>
+            </div>
+        </header>
+
+        <!-- Main Scrollable Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-6">
+            
+            <!-- TAB: DASHBOARD -->
+            <div id="tab-dashboard" class="tab-content fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Stats Card 1 -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-red-500">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-red-100 text-red-500 mr-4">
+                                <i class="fas fa-exclamation-triangle text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-semibold">Total Keterlambatan Bulan Ini</p>
+                                <p class="text-2xl font-bold text-gray-800" id="stat-terlambat">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Stats Card 3 -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-orange-500">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-orange-100 text-orange-500 mr-4">
+                                <i class="fas fa-exclamation-circle text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-semibold">Pelanggaran Tercatat</p>
+                                <p class="text-2xl font-bold text-gray-800" id="stat-pelanggaran">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Stats Card 2 -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-500 mr-4">
+                                <i class="fas fa-chalkboard-teacher text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-semibold">Guru Piket Hari Ini</p>
+                                <p class="text-xl font-bold text-gray-800" id="stat-piket">Belum Diatur</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4">Selamat Datang di SIPATUH RCB3</h2>
+                    <p class="text-gray-600 mb-4">Sistem Informasi Penegakan Tata Tertib dan Kehadiran SD Negeri Rancabentang 3. Gunakan menu di samping untuk mencatat keterlambatan siswa atau mengelola jadwal piket guru.</p>
+                </div>
+            </div>
+
+            <!-- TAB: KETERLAMBATAN -->
+            <div id="tab-keterlambatan" class="tab-content fade-in hidden">
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Input Keterlambatan Siswa</h2>
+                    <form id="form-keterlambatan" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Tanggal</label>
+                            <input type="date" id="ket-tanggal" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nama Siswa</label>
+                            <input type="text" id="ket-nama" placeholder="Masukkan nama siswa" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Kelas</label>
+                            <select id="ket-kelas" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                                <option value="">Pilih Kelas</option>
+                                <option value="1A">1A</option><option value="1B">1B</option>
+                                <option value="2A">2A</option><option value="2B">2B</option>
+                                <option value="2C">2C</option>
+                                <option value="3A">3A</option><option value="3B">3B</option>
+                                <option value="3A">3A</option>
+                                <option value="4A">4A</option><option value="4B">4B</option>
+                                <option value="5A">5A</option><option value="5B">5B</option>
+                                <option value="6A">6A</option><option value="6B">6B</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Menit Terlambat</label>
+                            <input type="number" id="ket-menit" placeholder="Contoh: 15" required min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700">Alasan</label>
+                            <textarea id="ket-alasan" rows="2" placeholder="Alasan keterlambatan..." required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"></textarea>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end">
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
+                                <i class="fas fa-save mr-2"></i> Simpan Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Table Data -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                        <h2 class="text-lg font-bold text-gray-700">Data Keterlambatan</h2>
+                        <button onclick="exportToExcel('tardiness')" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 transition flex items-center">
+                            <i class="fas fa-file-excel mr-2"></i> Unduh / Cetak Excel
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kelas</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Terlambat</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alasan</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-keterlambatan" class="bg-white divide-y divide-gray-200">
+                                <!-- Data will be injected here via JS -->
+                            </tbody>
+                        </table>
+                        <div id="empty-keterlambatan" class="text-center py-4 text-gray-500">Belum ada data.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: PELANGGARAN -->
+            <div id="tab-pelanggaran" class="tab-content fade-in hidden">
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Input Pelanggaran Siswa</h2>
+                    <form id="form-pelanggaran" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Tanggal</label>
+                            <input type="date" id="pel-tanggal" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nama Siswa</label>
+                            <input type="text" id="pel-nama" placeholder="Masukkan nama siswa" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Kelas</label>
+                            <select id="pel-kelas" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                                <option value="">Pilih Kelas</option>
+                                <option value="1A">1A</option><option value="1B">1B</option>
+                                <option value="2A">2A</option><option value="2B">2B</option>
+                                <option value="2C">2C</option>
+                                <option value="3A">3A</option><option value="3B">3B</option>
+                                <option value="3C">3C</option>
+                                <option value="4A">4A</option><option value="4B">4B</option>
+                                <option value="5A">5A</option><option value="5B">5B</option>
+                                <option value="6A">6A</option><option value="6B">6B</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Jenis Pelanggaran</label>
+                            <select id="pel-jenis" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                                <option value="">Pilih Jenis</option>
+                                <option value="Atribut/Seragam">Atribut/Seragam</option>
+                                <option value="Rambut Panjang/Diwarnai">Rambut Panjang/Diwarnai</option>
+                                <option value="Berkelahi">Berkelahi</option>
+                                <option value="Membolos">Membolos</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Poin Pelanggaran</label>
+                            <input type="number" id="pel-poin" placeholder="Contoh: 10" required min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700">Tindak Lanjut / Keterangan</label>
+                            <textarea id="pel-tindaklanjut" rows="2" placeholder="Tindak lanjut yang diberikan..." required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"></textarea>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end">
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
+                                <i class="fas fa-save mr-2"></i> Simpan Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Table Data -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                        <h2 class="text-lg font-bold text-gray-700">Data Pelanggaran Siswa</h2>
+                        <button onclick="exportToExcel('pelanggaran')" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 transition flex items-center">
+                            <i class="fas fa-file-excel mr-2"></i> Unduh / Cetak Excel
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kelas</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pelanggaran</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Poin</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tindak Lanjut</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-pelanggaran" class="bg-white divide-y divide-gray-200">
+                                <!-- Data will be injected here via JS -->
+                            </tbody>
+                        </table>
+                        <div id="empty-pelanggaran" class="text-center py-4 text-gray-500">Belum ada data.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: KEHADIRAN -->
+            <div id="tab-kehadiran" class="tab-content fade-in hidden">
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Input Kehadiran (Sakit/Izin/Alpha)</h2>
+                    <form id="form-kehadiran" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Tanggal</label>
+                            <input type="date" id="hadir-tanggal" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nama Siswa</label>
+                            <input type="text" id="hadir-nama" placeholder="Masukkan nama siswa" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Kelas</label>
+                            <select id="hadir-kelas" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                                <option value="">Pilih Kelas</option>
+                                <option value="1A">1A</option><option value="1B">1B</option>
+                                <option value="2A">2A</option><option value="2B">2B</option>
+                                <option value="3A">3A</option><option value="3B">3B</option>
+                                <option value="4A">4A</option><option value="4B">4B</option>
+                                <option value="5A">5A</option><option value="5B">5B</option>
+                                <option value="6A">6A</option><option value="6B">6B</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Status Kehadiran</label>
+                            <select id="hadir-status" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                                <option value="Sakit">Sakit</option>
+                                <option value="Izin">Izin</option>
+                                <option value="Alpha">Alpha</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end">
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
+                                <i class="fas fa-save mr-2"></i> Simpan Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Table Data -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                        <h2 class="text-lg font-bold text-gray-700">Data Ketidakhadiran</h2>
+                        <button onclick="exportToExcel('kehadiran')" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 transition flex items-center">
+                            <i class="fas fa-file-excel mr-2"></i> Unduh / Cetak Excel
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kelas</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-kehadiran" class="bg-white divide-y divide-gray-200">
+                                <!-- Data will be injected here via JS -->
+                            </tbody>
+                        </table>
+                        <div id="empty-kehadiran" class="text-center py-4 text-gray-500">Belum ada data.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: JADWAL PIKET -->
+            <div id="tab-piket" class="tab-content fade-in hidden">
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Input Jadwal Piket Guru</h2>
+                    <form id="form-piket" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Hari</label>
+                            <select id="piket-hari" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                                <option value="">Pilih Hari</option>
+                                <option value="Senin">Senin</option>
+                                <option value="Selasa">Selasa</option>
+                                <option value="Rabu">Rabu</option>
+                                <option value="Kamis">Kamis</option>
+                                <option value="Jumat">Jumat</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nama Guru</label>
+                            <input type="text" id="piket-nama" placeholder="Masukkan nama guru" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Tugas Pokok</label>
+                            <select id="piket-tugas" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2">
+                                <option value="Menyambut Siswa">Menyambut Siswa</option>
+                                <option value="Patroli Istirahat">Patroli Istirahat</option>
+                                <option value="Rekap Kehadiran">Rekap Kehadiran</option>
+                                <option value="Koordinator">Koordinator</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-3 flex justify-end">
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
+                                <i class="fas fa-save mr-2"></i> Tambah Jadwal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Table Data -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                        <h2 class="text-lg font-bold text-gray-700">Data Jadwal Piket</h2>
+                        <button onclick="exportToExcel('piket')" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 transition flex items-center">
+                            <i class="fas fa-file-excel mr-2"></i> Unduh / Cetak Excel
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hari</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Guru</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tugas Pokok</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-piket" class="bg-white divide-y divide-gray-200">
+                                <!-- Data will be injected here via JS -->
+                            </tbody>
+                        </table>
+                        <div id="empty-piket" class="text-center py-4 text-gray-500">Belum ada data.</div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // --- State Management (Simulating Database/Google Sheets) ---
+        // In real GAS deployment, you'd fetch this from google.script.run
+        let tardinessData = [
+            { id: 1, tanggal: '2026-10-27', nama: 'Budi Santoso', kelas: '6A', menit: 15, alasan: 'Macet di jalan' }
+        ];
+        let pelanggaranData = [
+            { id: 1, tanggal: '2026-10-27', nama: 'Dimas Anggara', kelas: '5B', jenis: 'Atribut/Seragam', poin: 10, tindaklanjut: 'Ditegur dan dicatat' }
+        ];
+        let kehadiranData = [
+            { id: 1, tanggal: '2026-10-27', nama: 'Andi Pratama', kelas: '4B', status: 'Sakit' }
+        ];
+        let scheduleData = [
+            { id: 1, hari: 'Senin', nama: 'Ibu Siti Aminah', tugas: 'Menyambut Siswa' },
+            { id: 2, hari: 'Selasa', nama: 'Bapak Ahmad Yani', tugas: 'Patroli Istirahat' }
+        ];
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set current date to tardiness form
+            document.getElementById('ket-tanggal').valueAsDate = new Date();
+            document.getElementById('pel-tanggal').valueAsDate = new Date();
+            document.getElementById('hadir-tanggal').valueAsDate = new Date();
+            
+            // Render initial tables
+            renderTardinessTable();
+            renderPelanggaranTable();
+            renderKehadiranTable();
+            renderScheduleTable();
+            updateDashboardStats();
+        });
+
+        // --- UI Navigation Logic ---
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        
+        // Mobile Sidebar Toggle
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Tab Switcher
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            // Show selected tab
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            
+            // Update Title
+            const titles = {
+                'dashboard': 'Dashboard Utama',
+                'keterlambatan': 'Pencatatan Keterlambatan',
+                'pelanggaran': 'Pencatatan Pelanggaran Siswa',
+                'kehadiran': 'Pencatatan Kehadiran Siswa',
+                'piket': 'Jadwal Piket Guru'
+            };
+            document.getElementById('page-title').innerText = titles[tabId];
+
+            // Update Nav Active State
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('bg-blue-900');
+            });
+            document.getElementById(`nav-${tabId}`).classList.add('bg-blue-900');
+
+            // Hide sidebar on mobile after clicking
+            if(window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+
+        // --- Feature: Keterlambatan Siswa ---
+        const formKeterlambatan = document.getElementById('form-keterlambatan');
+        formKeterlambatan.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newData = {
+                id: Date.now(),
+                tanggal: document.getElementById('ket-tanggal').value,
+                nama: document.getElementById('ket-nama').value,
+                kelas: document.getElementById('ket-kelas').value,
+                menit: document.getElementById('ket-menit').value,
+                alasan: document.getElementById('ket-alasan').value
+            };
+            tardinessData.push(newData);
+            formKeterlambatan.reset();
+            document.getElementById('ket-tanggal').valueAsDate = new Date();
+            
+            renderTardinessTable();
+            updateDashboardStats();
+            
+            // In actual GAS: google.script.run.saveTardiness(newData);
+        });
+
+        function renderTardinessTable() {
+            const tbody = document.getElementById('table-keterlambatan');
+            const emptyState = document.getElementById('empty-keterlambatan');
+            tbody.innerHTML = '';
+            
+            if (tardinessData.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            tardinessData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(item.tanggal)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${item.nama}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.kelas}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-bold">${item.menit} Menit</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.alasan}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <button onclick="deleteTardiness(${item.id})" class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i> Hapus</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteTardiness(id) {
+            tardinessData = tardinessData.filter(item => item.id !== id);
+            renderTardinessTable();
+            updateDashboardStats();
+            // In actual GAS: google.script.run.deleteTardinessData(id);
+        }
+
+        // --- Feature: Pelanggaran Siswa ---
+        const formPelanggaran = document.getElementById('form-pelanggaran');
+        formPelanggaran.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newData = {
+                id: Date.now(),
+                tanggal: document.getElementById('pel-tanggal').value,
+                nama: document.getElementById('pel-nama').value,
+                kelas: document.getElementById('pel-kelas').value,
+                jenis: document.getElementById('pel-jenis').value,
+                poin: document.getElementById('pel-poin').value,
+                tindaklanjut: document.getElementById('pel-tindaklanjut').value
+            };
+            pelanggaranData.push(newData);
+            formPelanggaran.reset();
+            document.getElementById('pel-tanggal').valueAsDate = new Date();
+            
+            renderPelanggaranTable();
+            updateDashboardStats();
+        });
+
+        function renderPelanggaranTable() {
+            const tbody = document.getElementById('table-pelanggaran');
+            const emptyState = document.getElementById('empty-pelanggaran');
+            tbody.innerHTML = '';
+            
+            if (pelanggaranData.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            pelanggaranData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(item.tanggal)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${item.nama}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.kelas}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-bold">${item.jenis}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-red-500">${item.poin}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${item.tindaklanjut}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <button onclick="deletePelanggaran(${item.id})" class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i> Hapus</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deletePelanggaran(id) {
+            pelanggaranData = pelanggaranData.filter(item => item.id !== id);
+            renderPelanggaranTable();
+            updateDashboardStats();
+        }
+
+        // --- Feature: Kehadiran Siswa ---
+        const formKehadiran = document.getElementById('form-kehadiran');
+        formKehadiran.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newData = {
+                id: Date.now(),
+                tanggal: document.getElementById('hadir-tanggal').value,
+                nama: document.getElementById('hadir-nama').value,
+                kelas: document.getElementById('hadir-kelas').value,
+                status: document.getElementById('hadir-status').value
+            };
+            kehadiranData.push(newData);
+            formKehadiran.reset();
+            document.getElementById('hadir-tanggal').valueAsDate = new Date();
+            
+            renderKehadiranTable();
+            // In actual GAS: google.script.run.saveKehadiran(newData);
+        });
+
+        function renderKehadiranTable() {
+            const tbody = document.getElementById('table-kehadiran');
+            const emptyState = document.getElementById('empty-kehadiran');
+            tbody.innerHTML = '';
+            
+            if (kehadiranData.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            kehadiranData.forEach(item => {
+                const tr = document.createElement('tr');
+                let statusColor = item.status === 'Sakit' ? 'text-yellow-600' : (item.status === 'Izin' ? 'text-blue-600' : 'text-red-600');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(item.tanggal)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${item.nama}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.kelas}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${statusColor}">${item.status}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <button onclick="deleteKehadiran(${item.id})" class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i> Hapus</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteKehadiran(id) {
+            kehadiranData = kehadiranData.filter(item => item.id !== id);
+            renderKehadiranTable();
+        }
+
+        // --- Feature: Jadwal Piket Guru ---
+        const formPiket = document.getElementById('form-piket');
+        formPiket.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newData = {
+                id: Date.now(),
+                hari: document.getElementById('piket-hari').value,
+                nama: document.getElementById('piket-nama').value,
+                tugas: document.getElementById('piket-tugas').value
+            };
+            scheduleData.push(newData);
+            formPiket.reset();
+            
+            renderScheduleTable();
+            updateDashboardStats();
+            // In actual GAS: google.script.run.saveSchedule(newData);
+        });
+
+        function renderScheduleTable() {
+            const tbody = document.getElementById('table-piket');
+            const emptyState = document.getElementById('empty-piket');
+            tbody.innerHTML = '';
+            
+            if (scheduleData.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            // Sort by days of week logic could be added here
+            const dayOrder = { "Senin":1, "Selasa":2, "Rabu":3, "Kamis":4, "Jumat":5 };
+            const sortedData = [...scheduleData].sort((a,b) => (dayOrder[a.hari] || 99) - (dayOrder[b.hari] || 99));
+
+            sortedData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">${item.hari}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.nama}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">${item.tugas}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <button onclick="deleteSchedule(${item.id})" class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i> Hapus</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteSchedule(id) {
+            scheduleData = scheduleData.filter(item => item.id !== id);
+            renderScheduleTable();
+            updateDashboardStats();
+        }
+
+        // --- Helper & Utility Functions ---
+        function formatDate(dateStr) {
+            if(!dateStr) return '';
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateStr).toLocaleDateString('id-ID', options);
+        }
+
+        function updateDashboardStats() {
+            // Update total tardiness
+            document.getElementById('stat-terlambat').innerText = tardinessData.length;
+            // Update total pelanggaran
+            document.getElementById('stat-pelanggaran').innerText = pelanggaranData.length;
+
+            // Simple logic to find today's teacher on duty
+            const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+            const today = days[new Date().getDay()];
+            const todaysDuty = scheduleData.filter(item => item.hari === today);
+            
+            const statPiket = document.getElementById('stat-piket');
+            if (todaysDuty.length > 0) {
+                statPiket.innerText = todaysDuty.map(d => d.nama).join(', ');
+                statPiket.classList.remove('text-red-500');
+            } else {
+                statPiket.innerText = (today === 'Sabtu' || today === 'Minggu') ? 'Libur' : 'Belum Diatur';
+                if(statPiket.innerText === 'Belum Diatur') statPiket.classList.add('text-red-500');
+            }
+        }
+
+        // --- Export to Excel Feature (using SheetJS) ---
+        function exportToExcel(type) {
+            let dataToExport = [];
+            let fileName = '';
+
+            // Custom Notification replacing window.alert
+            const showMsg = (msg) => {
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded shadow-lg z-50 fade-in';
+                toast.innerText = msg;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            };
+
+            if (type === 'tardiness') {
+                if(tardinessData.length === 0) return showMsg("Tidak ada data untuk diunduh!");
+                // Format data for excel
+                dataToExport = tardinessData.map(item => ({
+                    "Tanggal": item.tanggal,
+                    "Nama Siswa": item.nama,
+                    "Kelas": item.kelas,
+                    "Menit Terlambat": item.menit,
+                    "Alasan": item.alasan
+                }));
+                fileName = "Laporan_Keterlambatan_SIPATUH.xlsx";
+            } else if (type === 'pelanggaran') {
+                if(pelanggaranData.length === 0) return showMsg("Tidak ada data untuk diunduh!");
+                // Format data for excel
+                dataToExport = pelanggaranData.map(item => ({
+                    "Tanggal": item.tanggal,
+                    "Nama Siswa": item.nama,
+                    "Kelas": item.kelas,
+                    "Jenis Pelanggaran": item.jenis,
+                    "Poin": item.poin,
+                    "Tindak Lanjut": item.tindaklanjut
+                }));
+                fileName = "Laporan_Pelanggaran_SIPATUH.xlsx";
+            } else if (type === 'kehadiran') {
+                if(kehadiranData.length === 0) return showMsg("Tidak ada data untuk diunduh!");
+                // Format data for excel
+                dataToExport = kehadiranData.map(item => ({
+                    "Tanggal": item.tanggal,
+                    "Nama Siswa": item.nama,
+                    "Kelas": item.kelas,
+                    "Status": item.status
+                }));
+                fileName = "Laporan_Ketidakhadiran_SIPATUH.xlsx";
+            } else if (type === 'piket') {
+                if(scheduleData.length === 0) return showMsg("Tidak ada data untuk diunduh!");
+                // Format data for excel
+                dataToExport = scheduleData.map(item => ({
+                    "Hari": item.hari,
+                    "Nama Guru": item.nama,
+                    "Tugas Pokok": item.tugas
+                }));
+                fileName = "Jadwal_Piket_Guru_SIPATUH.xlsx";
+            }
+
+            // Create a new workbook and worksheet
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            
+            // Adjust column widths automatically
+            const colWidths = Object.keys(dataToExport[0]).map(key => ({
+                wch: Math.max(key.length, ...dataToExport.map(row => row[key] ? row[key].toString().length : 0)) + 2
+            }));
+            ws['!cols'] = colWidths;
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data");
+            
+            // Trigger download
+            XLSX.writeFile(wb, fileName);
+        }
+    </script>
+</body>
+</html>
